@@ -3,6 +3,16 @@ use tauri::{Emitter, Manager};
 
 use crate::overlay;
 
+#[cfg(target_os = "macos")]
+fn show_overlay_without_focus(overlay: &tauri::WebviewWindow) -> Result<(), String> {
+    use objc2_app_kit::NSWindow;
+
+    let ns_ptr = overlay.ns_window().map_err(|e| e.to_string())?;
+    let ns_window: &NSWindow = unsafe { &*(ns_ptr as *const NSWindow) };
+    ns_window.orderFrontRegardless();
+    Ok(())
+}
+
 #[derive(Clone, Serialize, Deserialize)]
 pub struct MessagePayload {
     pub sender: String,
@@ -32,6 +42,10 @@ pub fn show_overlay(app: tauri::AppHandle, message: MessagePayload) -> Result<()
         .map_err(|e| e.to_string())?;
 
     if !overlay.is_visible().unwrap_or(false) {
+        #[cfg(target_os = "macos")]
+        show_overlay_without_focus(&overlay)?;
+
+        #[cfg(not(target_os = "macos"))]
         overlay.show().map_err(|e| e.to_string())?;
     }
 
@@ -39,11 +53,6 @@ pub fn show_overlay(app: tauri::AppHandle, message: MessagePayload) -> Result<()
     overlay
         .set_ignore_cursor_events(true)
         .map_err(|e| e.to_string())?;
-
-    // Prevent the overlay from stealing keyboard focus from the main window
-    if let Some(main_window) = app.get_webview_window("main") {
-        let _ = main_window.set_focus();
-    }
 
     Ok(())
 }
