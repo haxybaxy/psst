@@ -14,12 +14,12 @@ body {
 
 .toast-stack {
   position: fixed;
-  top: 24px;
-  right: 24px;
+  top: 12px;
+  right: 12px;
+  left: 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-width: 380px;
   z-index: 9999;
 }
 

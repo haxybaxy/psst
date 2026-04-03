@@ -23,6 +23,8 @@ pub fn run() {
                 .build(),
         )
         .invoke_handler(tauri::generate_handler![
+            commands::create_overlay,
+            commands::destroy_overlay,
             commands::show_overlay,
             commands::hide_overlay,
         ])
@@ -35,7 +37,6 @@ pub fn run() {
             }
         })
         .setup(|app| {
-            overlay::create_overlay(app)?;
             tray::build_tray(app)?;
 
             // Register Cmd+Shift+P global hotkey

@@ -10,7 +10,9 @@ export function MessageHistory({ messages, currentUser }: MessageHistoryProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({ behavior: "instant" });
+    });
   }, [messages]);
 
   if (messages.length === 0) {

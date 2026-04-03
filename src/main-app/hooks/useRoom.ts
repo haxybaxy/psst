@@ -4,6 +4,8 @@ import { supabase } from "../../lib/supabase";
 import { Message, Peer } from "../../lib/types";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
+const MAX_MESSAGES = 200;
+
 interface UseRoomOptions {
   roomCode: string;
   displayName: string;
@@ -28,7 +30,7 @@ export function useRoom({ roomCode, displayName }: UseRoomOptions) {
     channel
       .on("broadcast", { event: "message" }, (data: { payload: Message }) => {
         const message = data.payload;
-        setMessages((prev) => [...prev, message]);
+        setMessages((prev) => [...prev, message].slice(-MAX_MESSAGES));
         invoke("show_overlay", { message });
       })
       .on("presence", { event: "sync" }, () => {
@@ -46,6 +48,7 @@ export function useRoom({ roomCode, displayName }: UseRoomOptions) {
       .subscribe(async (status: string) => {
         if (status === "SUBSCRIBED") {
           setIsConnected(true);
+          invoke("create_overlay");
           await channel.track({ joined_at: Date.now() });
         }
       });
@@ -56,6 +59,7 @@ export function useRoom({ roomCode, displayName }: UseRoomOptions) {
       channel.unsubscribe();
       channelRef.current = null;
       setIsConnected(false);
+      invoke("destroy_overlay");
     };
   }, [roomCode, displayName]);
 
@@ -77,7 +81,7 @@ export function useRoom({ roomCode, displayName }: UseRoomOptions) {
       });
 
       // Add to local history (sender won't receive their own broadcast)
-      setMessages((prev) => [...prev, message]);
+      setMessages((prev) => [...prev, message].slice(-MAX_MESSAGES));
     },
     [displayName],
   );
@@ -90,6 +94,7 @@ export function useRoom({ roomCode, displayName }: UseRoomOptions) {
     setIsConnected(false);
     setMessages([]);
     setPeers([]);
+    invoke("destroy_overlay");
   }, []);
 
   return { messages, peers, isConnected, sendMessage, leaveRoom };
